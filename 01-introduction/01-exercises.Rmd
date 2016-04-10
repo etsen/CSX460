@@ -1,6 +1,6 @@
 ---
 title: "01-exercises"
-author: "Christopher Brown"
+author: "Emmeline Tsen"
 date: "April 6, 2016"
 output: html_document
 ---
@@ -23,11 +23,11 @@ Write a function (f) that takes a vector of numbers, **x**, and returns a vector
 
 ```{r}
 f <- function(x) {
-  
-  # ...
-  
+  noZero <- x[x!=0] #creates array without the zero
+  prod(noZero)/ifelse(x==0,1,x) #divde by 1 if there is a zero in the array passed in
 }
-
+x <- c( 1, 5, 2, 8, 0)
+f(x)
 ```
     
 
@@ -50,7 +50,21 @@ Write a function f(x) to accept an integer vector, and returns a vector with tho
 
 ```{r}
 f <- function(x) {
-  # ...
+  arr <- x
+  for (i in 1:length(x)){
+    if (x[i]%%15 == 0){
+      arr[i] <- 'FizzBuzz'
+    } #checks if the remainder is 0 for multiples of 15
+    else if (x[i]%%3 == 0){
+      arr[i] <- 'Fizz'
+    } #checks if the remainder is 0 for multiples of 3
+    else if (x[i]%%5 == 0){
+      arr[i] <- 'Buzz'
+    } #checks if the remainder is 0 for multiples of 5
+  }
+  noquote(arr)
   
 }
+x <-1:20
+f(x)
 ```
