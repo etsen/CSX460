@@ -1,0 +1,175 @@
+---
+title: "05-exercises"
+author: "Emmeline Tsen"
+date: "2016-05-xx"
+output: html_document
+---
+
+## Reading:
+- **APM** Chapter 8.1-8.5 "Regression Trees and Rule-Based Models" (25 pages)
+- **APM** Chapter 14.1-14.5 "Classification Trees and Rule-Based"  
+
+```{r, echo=FALSE, results='hide', warning=FALSE }
+packs <-  c('ggplot2', 'magrittr', 'dplyr', 'caret', 'AppliedPredictiveModeling')
+
+for( nm in packs ) { 
+  # message(nm)
+  if( ! nm  %in% installed.packages()[,1]  ) install.packages(nm)
+  library(nm, character.only = TRUE)
+}
+
+.. = NULL  # For Aesthetics
+
+```
+
+
+## Exercise 1: GermanCredit
+
+Revisit the GermanCredit data. Use `caret` to build models of `Class` using the following techniques:
+
+- glm
+- rpart
+- knn
+- party::ctree
+- randomForest
+- A method of your choice from the Caret Model List (you will need to install any dependencies)
+
+Save the caret objects with the names provided.
+```{r}
+library(caret)
+library(magrittr)
+library(MASS)
+data("GermanCredit")
+gc <- GermanCredit
+
+```
+
+
+
+```{r}
+
+# Your work here. 
+fit.glm <- train(Class ~ Amount, data=gc, method="glm", family="binomial", trControl=ctrl)
+fit.glm
+fit.knn <- train( Class ~ ., data=gc, trControl=ctrl, method="knn")
+fit.knn
+fit.rpart <- train( Class ~ ., data=gc, trControl=ctrl, method="rpart")
+fit.rf <- train( Class ~ ., data=gc, trControl=ctrl, method="rf")
+fit.myown <- lm(Class ~Amount, data=gc)
+fit.myown
+
+
+#methods <- c('glm', 'rpart', 'knn')
+#methods <-list('glm' = NULL, 'rpart'="cp", 'knn'='k') 
+```
+
+
+- Compare the models using `caret::confusionMatrix`
+- Comparing the models Using the `pROC` packages
+  - create ROC curves for the models 
+  
+Show your work! 
+
+```{r}
+fit.glm  %>% confusionMatrix( positive="Bad")  # Confusion Matrix
+fit.knn  %>% confusionMatrix( positive="Bad")
+fit.rpart  %>% confusionMatrix( positive="Bad")
+fit.rf  %>% confusionMatrix( positive="Bad")
+fit.myown  %>% confusionMatrix( positive="Bad")
+
+library(pROC)
+roc %>% roc(fit.glm$pred$obs, fit.glm$pred$Bad, auc=TRUE )
+
+
+fit.glm$pred$obs
+
+```
+
+
+Q: Which models would you select based on these tools?
+I would use the rf model.
+
+Q: If you assume that a `Class=="bad""` is 10 more costly than `Class=="good"`, determine your threshold for the model of your choice.  Show your work.
+
+
+```{r}
+
+```
+
+
+
+
+Extra notes: 
+Rows: `r nrow(gc)`
+cols: `r ncol(gc)`
+Column Names: `r gc ?> names`
+
+
+```{r}
+library(hash)
+cls = gc %>% sapply(class)gc
+
+qplot(gc$Class) + xlab("Class") #unbalaned response
+dn <- c(gc$Class, rep(NA,100))
+dn <- c(gc$Class, rep(NA_character_,100))
+
+table(dn, useNA="ifany")
+gc$Class %>% table(useNA="ifany")
+qplot(gc$Class + xlab("class"))
+
+#Naiive Guess
+gc$Class %>% table %>% sort %>% rev %>% names %>% extract2(1)
+
+
+ctrl <- trainControl(method="boot", number=5, classProbs = TRUE, savePredictions = TRUE) #train controls
+
+fit <- glm(Class ~ Amount, data=gc, family=binomial())
+fit <- train(Class ~ Amount, data=gc, method="glm", family="binomial", trControl=ctrl)
+fit #caret output, 0.2-0.5
+fit$finalModel %>% summary #Model output
+fit %>% confusionMatrix(positive = "Bad")
+
+#full model
+fit <- train ( Class ~., data = gc, trControl=ctrl, method="rpart")
+
+install.packages("pROC")
+library(pROC)
+roc <- roc(fit$pred$obs, fit$pred$Bad, auc=TRUE)
+roc %>% plot (print)
+
+
+fit.knn <- train(Class ~., data=gc, trControl=ctrl, method="knn", tuneLength=7)
+fit.knn <- train(Class ~., data=gc, trControl=ctrl, method="knn", tuneGrid=data.frame(k=c(17,25,32))) #when k was smaller, we were overfitting
+fit.knn <- train(Class ~., data=gc, trControl=ctrl, method="knn", tuneGrid=data.frame(k=c(40,50,60)))
+data.frame(k=c(40,50,60), k2=1:3)
+
+fit.rpart <- train(Class ~., data=gc, trControl=ctrl, method="rpart") #complexity decreases, can increase tune length
+
+fit.rpart <- train(Class ~., data=gc, trControl=ctrl, method="rpart", tuneLength=10)
+
+#?rpart.control
+#complexity parameter: by how much do you need to change(?).... for that split to happen. so you can allow smaller changes. as you decrease the tree,
+
+
+summary(fit.rpart)
+
+install.packages("maptree")
+install.packages("cluster")
+library(maptree)
+
+draw.tree(fit.rpart)
+
+fit.rpart <- rpart(Class~., data=gc, cp=0.2)
+fit.rpart %>% draw.tree
+
+fit.rpart %>% maptree :: draw.tree(nodeinfo = T)
+fit.rpart$finalModel
+ 
+fit.rpart$pred
+ 
+fit.rpart$pred %>% head #predictive probability of each class
+
+
+glmStepAIC
+
+```
