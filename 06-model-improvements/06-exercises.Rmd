@@ -1,0 +1,130 @@
+---
+title: "05-exercises"
+author: "Emmeline Tsen"
+date: "2016-05-11"
+output: html_document
+---
+
+## Reading:
+- **APM** Chapter 8.6 and 8.8 
+- **APM** Chapter 14.8 
+- **APM** Chapter 7.1 & 7.3 "Non-Linear Regression Models"
+- **APM** Chapter 13.2 & 13.4 "Non-Linear Classifcation Models"
+
+
+```{r,echo=FALSE}
+
+packs <-  c('AppliedPredictiveModeling', 'ggplot2', 'magrittr', 'dplyr')
+
+for( nm in packs ) { 
+  # message(nm)
+  if( ! nm  %in% installed.packages()[,1]  ) install.packages(nm)
+  library(nm, character.only = TRUE)
+}
+
+# Load data set into environment
+data(FuelEconomy)
+.. = NULL  # Needed for aesthetics 
+
+FE <- dplyr::bind_rows(cars2010, cars2011, cars2012)    # Define Da
+
+```
+
+## Fuel Economy 
+
+
+This week we return to the Fuel Economy Data having learned much about model building. This assignment is to go through the process of building several regression models and pick the most predictive model. Use the `FE` data set created for you above.
+
+
+Start by making choosing a metric and making a naive guess of model performance: 
+
+Metric: Mean Naive Model
+Naive Guess: 35.03823
+Expected Model Performance (based on Naive Guess): 8.096176 
+
+Show your work below for the calculations
+
+```{r} 
+dat <- bind_rows( cars2010, cars2011, cars2012)  
+  
+naive_guess = mean(dat$FE)
+
+naive_guess
+
+rmse <- function(y,yhat) {
+  ( y - yhat )^2  %>% mean   %>% sqrt 
+}
+
+err_naive_guess = rmse(dat$FE, naive_guess)
+
+err_naive_guess
+```
+
+
+Based only your intuition, how low do your think you can get your metric: 5
+
+
+## Examine your data
+
+ * Plot your response/outcome 
+
+ * Make a guess of a strong predictor: Fuel Economy  
+ * Plot your response vs your predictor. 
+
+```{r}
+qplot(dat$FE)
+
+qplot(dat$EngDispl)
+
+fit.2012 <- lm(dat$FE ~ dat$EngDispl, data= cars2012)
+fit.2012
+plot(fit.2012)
+
+qplot(dat$FE,dat$EngDispl)
+```
+
+
+
+## Build Simple Models
+
+Using **caret**, build a simple linear model and a simple tree model. 
+
+```{r}
+library(caret)
+
+ctrl <- trainControl(method="boot", number=5, classProbs = TRUE, savePredictions = TRUE) #train controls
+
+fit.lm <- train(FE ~ EngDispl, data=FE, method="glm", trControl=ctrl)
+fit.lm
+
+fit.rp <- train(FE ~ EngDispl, data=FE, method="rpart", trControl=ctrl)
+fit.rp
+
+```
+
+
+What did you learn about the data from these models.
+The RMSE kept increasing
+
+
+## Build More Advanced Models
+
+Now refine your models. Use **caret** to build advanced models:
+- one that uses model averaging (bagging) 
+- one that uses boosting 
+
+```{r}
+
+fit.bag   <- train(FE ~ EngDispl, data=FE, trControl=ctrl, method="treebag")
+fit.bag
+
+fit.boost <- train(FE ~ EngDispl, data=FE, trControl=ctrl, method="glmboost")
+fit.boost
+
+```
+
+
+## Conclusion 
+
+Which model would you use and why?  Under different circumstances why would you choose one of the other models.
+I would prefer to use the bagging method. Its RMSE and Rsquared value came out to be the least between bagging and boosting.
